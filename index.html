@@ -84,6 +84,41 @@ input{width:100%;background:rgba(7,8,32,.55);border:1px solid rgba(169,139,240,.
   color:var(--texto);font:inherit;font-size:1rem;transition:border-color .4s,box-shadow .4s,background .4s;color-scheme:dark}
 input:focus{outline:0;border-color:var(--ouro);box-shadow:0 0 0 4px rgba(230,195,106,.18);background:rgba(7,8,32,.8)}
 input::placeholder{color:#8f86b8}
+/* Campo de data: mesmas dimensões visuais dos demais campos, inclusive no Safari/iPhone */
+#data{
+  display:block;
+  width:100% !important;
+  max-width:100%;
+  min-width:0;
+  height:52px !important;
+  min-height:52px !important;
+  max-height:52px;
+  padding:.6rem .9rem;
+  line-height:normal;
+  font-size:1rem;
+  box-sizing:border-box;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#data::-webkit-date-and-time-value{
+  text-align:left;
+  line-height:normal;
+  min-height:0;
+  padding:0;
+}
+@media (max-width:600px){
+  .caixa input[type="date"]{
+    display:block;
+    width:100% !important;
+    height:52px !important;
+    min-height:52px !important;
+    max-height:52px;
+    padding:.6rem .9rem;
+    font-size:1rem;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+}
 .caixa .btn{width:100%;margin-top:.4rem;padding:.85rem 1.6rem;font-size:.8rem}
 #enviar{color:#070820;font-weight:700;text-shadow:0 1px 0 rgba(255,255,255,.28);letter-spacing:.16em}
 #enviar:hover{color:#070820}
@@ -305,11 +340,7 @@ footer{position:relative;z-index:1;text-align:center;padding:2rem;font-size:.9re
    Depois: Implantar > Nova implantação > App da Web >
    "Executar como: Eu" e "Quem pode acessar: Qualquer pessoa" > copie a URL gerada.
 */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywWbrvXmSikyDROHkwixMF4ajpqzh55Mo2QBJGA1Cwrb3GT25b5cKGNYHCvbKVkZK5/exec';
-
-/* Link da página de pagamento (InfinitePay, Mercado Pago, Stripe, etc.).
-   Usado no botão "Ir para o pagamento" da página de resultado (não há redirecionamento automático). */
-const PAGAMENTO_URL = 'https://mpago.la/33qHr7A';
+const API_URL = 'https://mapa-astral-api.brunacmgcontato.workers.dev';
 
 /* ============ Nebulosas (imagens SVG geradas) ============ */
 function hex(c){const n=parseInt(c.slice(1),16);return [(n>>16)/255,((n>>8)&255)/255,(n&255)/255].map(v=>v.toFixed(3))}
@@ -339,6 +370,15 @@ document.querySelectorAll('[data-neb]').forEach(el=>{
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
 document.querySelectorAll('.rev').forEach(el=>io.observe(el));
 document.getElementById('ano').textContent=new Date().getFullYear();
+
+const revelarBtn=document.querySelector('.hero a[href="#formulario"]');
+if(revelarBtn){
+  revelarBtn.addEventListener('click',e=>{
+    e.preventDefault();
+    document.getElementById('formulario').scrollIntoView({behavior:'smooth',block:'start'});
+    history.replaceState(null,'','#formulario');
+  });
+}
 
 /* ============ Signo solar ============ */
 const SIGNOS=[
@@ -383,19 +423,26 @@ form.addEventListener('submit',async ev=>{
   if(cidade.length<2) return aviso('Informe a cidade de nascimento.',true);
   if(estado.length<2) return aviso('Informe o estado de nascimento.',true);
   if(pais.length<2) return aviso('Informe o país de nascimento.',true);
-  if(SCRIPT_URL.startsWith('COLE_AQUI')) return aviso('Configure a URL do Google Apps Script no código (constante SCRIPT_URL).',true);
-  btn.disabled=true;btn.textContent='Consultando os astros…';aviso('');
+  btn.disabled=true;btn.textContent='Preparando seu pagamento…';aviso('');
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:new URLSearchParams({nome,email,celular,data,cidade,estado,pais,local:cidade+', '+estado+', '+pais})});
+    const resposta=await fetch(API_URL+'/create-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nome,email,celular,data,cidade,estado,pais})
+    });
+    const resultado=await resposta.json().catch(()=>({}));
+    if(!resposta.ok || !resultado.checkout_url) throw new Error(resultado.error||'Não foi possível gerar o pagamento.');
     const [n,g,,t]=signo(data);
     document.getElementById('rGlifo').textContent=g;
     document.getElementById('rSigno').textContent=nome.split(' ')[0]+', seu Sol está em '+n;
-    document.getElementById('rTexto').textContent=t+' Seus dados foram recebidos.\nLibere agora o seu mapa completo.';
-    document.getElementById('irPagar').href=PAGAMENTO_URL;
-    document.getElementById('irPagar2').href=PAGAMENTO_URL;
+    document.getElementById('rTexto').textContent=t+' Seus dados foram enviados.\nSeu pedido está aguardando pagamento. Libere agora o seu mapa completo.';
+    document.getElementById('irPagar').href=resultado.checkout_url;
+    document.getElementById('irPagar2').href=resultado.checkout_url;
     mostrarPagina2();
     form.reset();
-  }catch(e){aviso('Não foi possível enviar agora. Tente novamente em instantes.',true)}
+  }catch(e){
+    aviso(e.message||'Não foi possível iniciar o pagamento. Verifique sua conexão e tente novamente.',true);
+  }
   btn.disabled=false;btn.textContent='Consultar os astros';
 });
 function mostrarPagina2(){
@@ -412,3 +459,4 @@ document.getElementById('voltar').addEventListener('click',e=>{
 </script>
 </body>
 </html>
+
