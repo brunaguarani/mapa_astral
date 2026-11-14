@@ -427,7 +427,7 @@ form.addEventListener('submit',async ev=>{
   try{
     const resposta=await fetch(API_URL+'/create-order',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
       body:JSON.stringify({nome,email,celular,data,cidade,estado,pais})
     });
     const resultado=await resposta.json().catch(()=>({}));
@@ -459,4 +459,5 @@ document.getElementById('voltar').addEventListener('click',e=>{
 </script>
 </body>
 </html>
+
 
