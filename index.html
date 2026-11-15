@@ -579,14 +579,14 @@ body { background-color: #16072f !important; }
         <div class="campo"><label for="horario">Horário de nascimento</label>
           <div class="horario-linha">
             <input id="horario" name="horario" type="time" aria-describedby="ajudaHorario">
-            <div class="periodos-dia" role="group" aria-label="Período aproximado do nascimento">
+            <div class="periodos-dia" role="group" aria-label="Período do nascimento obrigatório" aria-required="true">
               <label class="ticket-periodo"><input type="radio" name="periodoNascimento" value="Manhã"><span>Manhã</span></label>
               <label class="ticket-periodo"><input type="radio" name="periodoNascimento" value="Tarde"><span>Tarde</span></label>
               <label class="ticket-periodo"><input type="radio" name="periodoNascimento" value="Noite"><span>Noite</span></label>
             </div>
           </div>
           <label class="nao-sei-opcao" for="horarioNaoSei"><input id="horarioNaoSei" type="checkbox"> <span>Não sei meu horário de nascimento</span></label>
-          <p id="ajudaHorario" class="ajuda-campo">Informe o horário exato ou marque o período aproximado.</p>
+          <p id="ajudaHorario" class="ajuda-campo">Informe o horário exato e selecione Manhã, Tarde ou Noite. Se não souber o horário, marque a opção abaixo.</p>
         </div>
         <div class="campo"><label for="cidade">Cidade de nascimento</label>
           <input id="cidade" name="cidade" type="text" placeholder="Ex.: São Paulo" autocomplete="address-level2" required></div>
@@ -818,7 +818,7 @@ form.addEventListener('submit', async ev => {
   if(cidade.length<2) return aviso('Informe a cidade de nascimento.',true);
   if(estado.length<2) return aviso('Informe o estado de nascimento.',true);
   if(pais.length<2) return aviso('Informe o país de nascimento.',true);
-  if(!horarioNaoSei.checked && !horario && !periodo) return aviso('Informe o horário, escolha manhã, tarde ou noite, ou marque “Não sei”.',true);
+  if(!horarioNaoSei.checked && !periodo) return aviso('Selecione o período do nascimento: Manhã, Tarde ou Noite. Se não souber o horário, marque “Não sei meu horário de nascimento”.',true);
 
   btn.disabled=true;
   btn.textContent='PREPARANDO SEU MAPA...';
